@@ -50,14 +50,13 @@ TOOLS = {
 }
 
 
-def show(messages: list, turn: int, response: dict = None) -> None:
-    """Print the full context window in a readable way."""
+def show_context(messages: list, turn: int) -> None:
+    """Print the full context window being sent to the model."""
     print(f"\n{'=' * 70}")
     print(f" TURN {turn} — full context window being sent ({len(messages)} messages)")
     print(f"{'=' * 70}")
     for i, m in enumerate(messages):
-        role = m["role"].upper()
-        print(f"\n--- message[{i}] role={role} ---")
+        print(f"\n--- message[{i}] role={m['role'].upper()} ---")
         if m.get("tool_calls"):
             for call in m["tool_calls"]:
                 print(f"  tool_call: {call['function']['name']}"
@@ -67,9 +66,9 @@ def show(messages: list, turn: int, response: dict = None) -> None:
         if m.get("content"):
             print(f"  content: {m['content']}")
 
-    if response is None:
-        return
 
+def show_response(response: dict, turn: int) -> None:
+    """Print what the model decided, plus token usage."""
     usage = response.get("usage", {})
     message = response["choices"][0]["message"]
     print(f"\n{'-' * 70}")
@@ -112,9 +111,9 @@ def run(question: str, max_turns: int = 5) -> str:
     ]
 
     for turn in range(1, max_turns + 1):
-        show(messages, turn)
+        show_context(messages, turn)
         response = call_model(messages)
-        show(messages, turn, response)
+        show_response(response, turn)
 
         message = response["choices"][0]["message"]
         messages.append(message)
@@ -140,4 +139,4 @@ def run(question: str, max_turns: int = 5) -> str:
 if __name__ == "__main__":
     if len(sys.argv) < 2:
         sys.exit('Usage: python agent.py "your question"')
-    print(run(" ".join(sys.argv[1:])))
+    run(" ".join(sys.argv[1:]))
